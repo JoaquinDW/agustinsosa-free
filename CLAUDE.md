@@ -36,7 +36,7 @@ The `__tests__/` directory contains concurrency tests that require a live Supaba
 Required in `.env.local`:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `NEXT_PUBLIC_SUPABASE_DB_SCHEMA` — optional, defaults to `public`. The free-raffle copy of the site sets it to `gratis` to use the `gratis` schema of the same Supabase project (created by `scripts/31-crear-schema-gratis.sql`, which also creates `gratis.leads`). The schema must be added under Data API → Exposed schemas.
+- `NEXT_PUBLIC_SUPABASE_DB_SCHEMA` — optional, defaults to `gratis` in this repo (`public` in the main site): the Postgres schema of the shared Supabase project (created by `scripts/31-crear-schema-gratis.sql`, which also creates `gratis.leads`). The schema must be added under Data API → Exposed schemas.
 - `CRON_SECRET` — used to authenticate calls to `/api/verificar-sorteos`
 - `MERCADOPAGO_ACCESS_TOKEN` — disabled legacy variable; do not configure or use it
 - `RESEND_API_KEY` — for transactional emails via Resend

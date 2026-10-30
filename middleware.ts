@@ -81,6 +81,9 @@ async function siteIsPublished(): Promise<boolean> {
         headers: {
           apikey: serviceKey,
           Authorization: `Bearer ${serviceKey}`,
+          // Mismo schema que lib/supabase.ts: este sitio lee su propio
+          // sitio_publicado en "gratis", no el del sitio principal.
+          "Accept-Profile": process.env.NEXT_PUBLIC_SUPABASE_DB_SCHEMA || "gratis",
         },
         cache: "no-store",
       },
