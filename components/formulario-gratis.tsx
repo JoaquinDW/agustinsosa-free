@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, Check, CheckCircle2, Instagram, Loader2, Upload } from "lucide-react"
+import { ArrowLeft, Check, CheckCircle2, ExternalLink, Instagram, Loader2, Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,6 +12,7 @@ import {
   CUENTAS_INSTAGRAM,
   MAX_BYTES_CAPTURA,
   TIPOS_CAPTURA,
+  normalizarInstagram,
 } from "@/lib/consentimientos"
 
 // Origen de la visita (UTM de la URL y referrer) para saber de dónde viene
@@ -61,6 +62,7 @@ export function FormularioGratis({
   const [nombre, setNombre] = useState("")
   const [telefono, setTelefono] = useState("")
   const [email, setEmail] = useState("")
+  const [instagram, setInstagram] = useState("")
   // Captura de que sigue a cada cuenta de Instagram (clave: id de la cuenta)
   const [capturas, setCapturas] = useState<Record<string, File>>({})
   const [aceptaBases, setAceptaBases] = useState(false)
@@ -73,7 +75,7 @@ export function FormularioGratis({
 
   const capturasOk = CUENTAS_INSTAGRAM.every((cuenta) => capturas[cuenta.id])
   const formularioValido = Boolean(
-    nombre.trim() && telefono.trim() && email.trim() && capturasOk && aceptaBases,
+    nombre.trim() && telefono.trim() && email.trim() && instagram.trim() && capturasOk && aceptaBases,
   )
 
   const elegirCaptura = async (cuentaId: string, archivo: File | undefined) => {
@@ -98,6 +100,10 @@ export function FormularioGratis({
       setError("Ingresá un número de teléfono válido. Si es de Paraguay, incluí +595.")
       return
     }
+    if (!normalizarInstagram(instagram)) {
+      setError("Ingresá tu usuario de Instagram, por ejemplo @tuusuario.")
+      return
+    }
     setIsLoading(true)
     setError(null)
 
@@ -106,6 +112,7 @@ export function FormularioGratis({
       body.append("nombre", nombre.trim())
       body.append("email", email.trim())
       body.append("telefono", telefono.trim())
+      body.append("instagram", instagram.trim())
       body.append("aceptaEmail", String(aceptaNovedades))
       body.append("aceptaWhatsapp", String(aceptaNovedades))
       body.append("origen", JSON.stringify(obtenerOrigen()))
@@ -167,12 +174,96 @@ export function FormularioGratis({
       onSubmit={handleSubmit}
       className="pack-card relative px-5 py-6 sm:px-7 space-y-4"
     >
+      {/* Requisitos: seguir las cuentas de Instagram y subir una captura de cada una */}
+      <div className="rounded-xl border border-[#ff0040]/40 bg-[#ff0040]/[0.06] p-4">
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <p className="text-sm font-bold uppercase tracking-wider text-white">
+            Requisitos para participar
+          </p>
+          <span className="rounded-full bg-[#ff0040] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+            Obligatorio
+          </span>
+        </div>
+        <p className="mb-3 text-xs text-gray-400">
+          Seguí estas dos cuentas, sacá una captura de cada perfil donde se vea que
+          las seguís y subila acá. Sin las dos capturas no se puede participar.
+        </p>
+        <div className="space-y-2.5">
+          {CUENTAS_INSTAGRAM.map((cuenta, indice) => (
+            <div key={cuenta.id} className="rounded-lg border border-white/10 bg-black/40 p-3">
+              <div className="mb-2.5 flex items-center gap-2">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-white">
+                  {indice + 1}
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-white">
+                    Seguí a {cuenta.nombre} <span className="text-[#ff0040]">*</span>
+                  </p>
+                  <p className="truncate text-xs text-gray-400">@{cuenta.id}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <a
+                  href={cuenta.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-[#f58529] via-[#dd2a7b] to-[#8134af] px-2 py-2.5 text-xs font-bold text-white transition-opacity hover:opacity-90 sm:text-sm"
+                >
+                  <Instagram className="h-4 w-4 shrink-0" />
+                  Seguir
+                  <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-80" />
+                </a>
+                <label
+                  className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-lg px-2 py-2.5 text-xs font-bold sm:text-sm ${
+                    capturas[cuenta.id]
+                      ? "bg-green-500/15 text-green-300 ring-1 ring-green-500/40"
+                      : "bg-white/10 text-white ring-1 ring-white/20 hover:bg-white/20"
+                  }`}
+                >
+                  {capturas[cuenta.id] ? (
+                    <>
+                      <Check className="h-4 w-4 shrink-0" /> Captura lista
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4 shrink-0" /> Subir captura
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    disabled={isLoading}
+                    onChange={(e) => elegirCaptura(cuenta.id, e.target.files?.[0])}
+                  />
+                </label>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-xs text-gray-400">
+          Además: ser mayor de 18 años, vivir en Argentina o Paraguay y participar una
+          sola vez por sorteo (mismo email, WhatsApp o Instagram no se aceptan dos veces).
+        </p>
+      </div>
+
       <Field label="Nombre y apellido">
         <Input
           value={nombre}
           onChange={(e) => setNombre(e.target.value)}
           placeholder="Tu nombre completo"
           autoComplete="name"
+          disabled={isLoading}
+        />
+      </Field>
+      <Field label="Tu usuario de Instagram">
+        <Input
+          value={instagram}
+          onChange={(e) => setInstagram(e.target.value)}
+          placeholder="@tuusuario"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
           disabled={isLoading}
         />
       </Field>
@@ -196,53 +287,6 @@ export function FormularioGratis({
           disabled={isLoading}
         />
       </Field>
-
-      <div className="space-y-2">
-        <Label className="text-gray-200">
-          Seguí estas cuentas y subí una captura de cada una{" "}
-          <span className="text-[#ff0040]">*</span>
-        </Label>
-        {CUENTAS_INSTAGRAM.map((cuenta) => (
-          <div
-            key={cuenta.id}
-            className="flex items-center gap-3 rounded-lg border border-white/10 bg-black/30 p-3"
-          >
-            <a
-              href={cuenta.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex min-w-0 flex-1 items-center gap-2 text-sm text-white hover:underline"
-            >
-              <Instagram className="h-4 w-4 shrink-0 text-[#ff0040]" />
-              <span className="truncate">{cuenta.nombre}</span>
-            </a>
-            <label
-              className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${
-                capturas[cuenta.id]
-                  ? "bg-green-500/15 text-green-300"
-                  : "bg-white/10 text-gray-200 hover:bg-white/20"
-              }`}
-            >
-              {capturas[cuenta.id] ? (
-                <>
-                  <Check className="h-3.5 w-3.5" /> Captura lista
-                </>
-              ) : (
-                <>
-                  <Upload className="h-3.5 w-3.5" /> Subir captura
-                </>
-              )}
-              <input
-                type="file"
-                accept="image/*"
-                className="sr-only"
-                disabled={isLoading}
-                onChange={(e) => elegirCaptura(cuenta.id, e.target.files?.[0])}
-              />
-            </label>
-          </div>
-        ))}
-      </div>
 
       <div className="space-y-2.5 pt-1 text-sm">
         <Casilla checked={aceptaBases} onChange={setAceptaBases} disabled={isLoading}>

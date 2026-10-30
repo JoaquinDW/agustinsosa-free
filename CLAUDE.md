@@ -9,6 +9,7 @@ This is a copy of `JoaquinDW/sorteo-sosa-motos` for **free raffles only** (clien
 - Uses the `gratis` Postgres schema of the **same** Supabase project (`NEXT_PUBLIC_SUPABASE_DB_SCHEMA`, default `gratis` here). Create it with `scripts/31-crear-schema-gratis.sql` and add `gratis` under Data API → Exposed schemas.
 - The home (`app/page.tsx`) shows the free participation form (`components/formulario-gratis.tsx`) instead of packs. `/free` renders the same form. The ranking is hidden by default.
 - `/api/transferencia` returns 410: no chances are sold here.
+- Free participation requires the participant's Instagram user (`datos_encuesta.instagram`, also `gratis.leads.instagram`) and one screenshot per account in `CUENTAS_INSTAGRAM`. Only one entry per sorteo per email, phone (stored normalized `549…`/`595…`) or Instagram user: checked by `buscarParticipacionGratuitaDuplicada` and enforced by the unique indexes in `scripts/32-gratis-unicos.sql`.
 - Each free participation also upserts `gratis.leads` (`lib/leads.ts`) with one optional, unticked-by-default marketing consent checkbox that sets both `acepta_email` and `acepta_whatsapp`. The exact accepted text (`lib/consentimientos.ts`), timestamp, IP and UTM origin are stored. Only contact leads with `baja_at IS NULL` and the matching `acepta_*` flag.
 
 The rest of this file describes the shared codebase inherited from the main site.

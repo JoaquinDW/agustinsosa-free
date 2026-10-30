@@ -1686,6 +1686,16 @@ export default function BackofficePage() {
                                   </Badge>
                                 )}
                               </div>
+                              {comprador.datos_encuesta?.instagram && (
+                                <a
+                                  href={`https://www.instagram.com/${encodeURIComponent(comprador.datos_encuesta.instagram)}/`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="mt-1 block text-xs text-pink-600 underline"
+                                >
+                                  Instagram: @{comprador.datos_encuesta.instagram}
+                                </a>
+                              )}
                               {comprador.datos_encuesta?.capturas_instagram && (
                                 <div className="mt-1 flex flex-wrap gap-2 text-xs">
                                   {CUENTAS_INSTAGRAM.filter(

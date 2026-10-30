@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import {
+  buscarParticipacionGratuitaDuplicada,
   crearCompradorGratuito,
-  existeParticipacionGratuita,
   generarNumerosUnicos,
   obtenerSorteoActivo,
 } from "@/lib/database"
@@ -10,7 +10,12 @@ import { enviarEmailConfirmacion } from "@/lib/email"
 import { requirePublishedSite } from "@/lib/site-visibility"
 import { normalizarTelefono } from "@/lib/whatsapp/normalizar"
 import { limpiarOrigen, registrarLead } from "@/lib/leads"
-import { CUENTAS_INSTAGRAM, MAX_BYTES_CAPTURA, TIPOS_CAPTURA } from "@/lib/consentimientos"
+import {
+  CUENTAS_INSTAGRAM,
+  MAX_BYTES_CAPTURA,
+  TIPOS_CAPTURA,
+  normalizarInstagram,
+} from "@/lib/consentimientos"
 import { uploadToSupabase } from "@/lib/supabase-storage"
 
 export async function POST(request: NextRequest) {
@@ -23,6 +28,7 @@ export async function POST(request: NextRequest) {
     const nombre = String(formData.get("nombre") || "")
     const email = String(formData.get("email") || "")
     const telefono = String(formData.get("telefono") || "")
+    const instagram = normalizarInstagram(String(formData.get("instagram") || ""))
     const aceptaEmail = formData.get("aceptaEmail") === "true"
     const aceptaWhatsapp = formData.get("aceptaWhatsapp") === "true"
     let origen: unknown = null
@@ -39,8 +45,17 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-    if (!normalizarTelefono(telefono)) {
+    // Se guarda normalizado (549… / 595…) para detectar el mismo número
+    // escrito de distintas formas.
+    const telefonoNormalizado = normalizarTelefono(telefono)
+    if (!telefonoNormalizado) {
       return NextResponse.json({ error: "Ingresá un número de teléfono válido." }, { status: 400 })
+    }
+    if (!instagram) {
+      return NextResponse.json(
+        { error: "Ingresá tu usuario de Instagram (por ejemplo @tuusuario)." },
+        { status: 400 }
+      )
     }
 
     // Capturas de que sigue a las cuentas de Instagram (obligatorias)
@@ -82,11 +97,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Límite: una participación gratuita por email por sorteo
-    const yaParticipo = await existeParticipacionGratuita(sorteo.id, emailNormalizado)
-    if (yaParticipo) {
+    // Límite: una participación por email, teléfono y usuario de Instagram por sorteo
+    // Si la consulta falla, se sigue: los índices únicos de la base rechazan
+    // igual el duplicado al insertar.
+    const duplicado = await buscarParticipacionGratuitaDuplicada(sorteo.id, {
+      email: emailNormalizado,
+      telefono: telefonoNormalizado,
+      instagram,
+    }).catch((errorDuplicado) => {
+      console.error("Error buscando participación duplicada:", errorDuplicado)
+      return null
+    })
+    if (duplicado) {
+      const dato = {
+        email: "este email",
+        telefono: "este número de WhatsApp",
+        instagram: "este usuario de Instagram",
+      }[duplicado]
       return NextResponse.json(
-        { error: "Ya participaste gratis en este sorteo con este email." },
+        { error: `Ya hay una participación en este sorteo con ${dato}. Solo se permite una por persona.` },
         { status: 409 }
       )
     }
@@ -144,14 +173,16 @@ export async function POST(request: NextRequest) {
       sorteoId: sorteo.id,
       nombre: nombre.trim(),
       email: emailNormalizado,
-      telefono: telefono.trim(),
+      telefono: telefonoNormalizado,
       numerosAsignados,
-      datosEncuesta: { capturas_instagram: capturasInstagram },
+      datosEncuesta: { instagram, capturas_instagram: capturasInstagram },
     })
 
+    // Si otra participación con los mismos datos entró a la vez, el índice
+    // único de la base rechaza esta.
     if (!nuevoComprador) {
       return NextResponse.json(
-        { error: "Error registrando tu participación." },
+        { error: "No se pudo registrar tu participación. Si ya participaste, solo se permite una por persona." },
         { status: 500 }
       )
     }
@@ -159,11 +190,11 @@ export async function POST(request: NextRequest) {
     // Guardar el contacto para promociones del sitio principal. Si falla, la
     // participación ya quedó registrada: no se le devuelve error al usuario.
     try {
-      const telefonoNormalizado = normalizarTelefono(telefono)
       await registrarLead({
         nombre: nombre.trim(),
         email: emailNormalizado,
         telefono: telefonoNormalizado,
+        instagram,
         pais: telefonoNormalizado?.startsWith("595") ? "PY" : "AR",
         aceptaEmail: aceptaEmail === true,
         aceptaWhatsapp: aceptaWhatsapp === true,
