@@ -1,0 +1,13 @@
+{
+  "functions": {
+    "app/api/verificar-sorteos/route.ts": {
+      "maxDuration": 30
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/verificar-sorteos",
+      "schedule": "0 14 * * *"
+    }
+  ]
+}
