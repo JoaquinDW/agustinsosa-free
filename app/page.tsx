@@ -3,13 +3,10 @@
 import { useState, useEffect, type CSSProperties } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ShoppingCart, Clock, Trophy } from "lucide-react"
+import { Clock, Gift, Trophy } from "lucide-react"
 import Link from "next/link"
-import { CompraModalNuevo } from "@/components/compra-modal-nuevo"
-import { RankingEnVivo } from "@/components/ranking-en-vivo"
-import { obtenerTextosRanking } from "@/lib/contenido-ranking"
-import { CantidadPersonalizadaCard } from "@/components/cantidad-personalizada-card"
-import { TransferenciaExitoModal } from "@/components/transferencia-exito-modal"
+import { FormularioGratis } from "@/components/formulario-gratis"
+import { IntroParticipacionGratuita } from "@/components/intro-participacion-gratuita"
 import { Header } from "@/components/header"
 import { GanadoresPasados } from "@/components/ganadores-pasados"
 import { GanadoresExpress } from "@/components/ganadores-express"
@@ -574,23 +571,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-dark-gradient">
       <Header
         marca={contenido.marca}
-        rankingVisible={contenido.rankingVisible && sorteo.estado === "activo"}
       />
-      {promo && (
-        <div className="border-b border-fuchsia-400/30 bg-[#24122f] px-4 py-3 text-center text-sm font-semibold text-white">
-          {promo.nombre}, tenés{" "}
-          <span className="text-[#d69bff]">{promo.porcentaje}% OFF</span> para
-          sumar chances · vence en {Math.floor(promoTiempo / 3600000)}h{" "}
-          {Math.floor((promoTiempo % 3600000) / 60000)}m{" "}
-          {Math.floor((promoTiempo % 60000) / 1000)}s
-        </div>
-      )}
-      {!promo && promoNoDisponible && (
-        <div className="bg-zinc-900 px-4 py-2 text-center text-xs text-zinc-400">
-          Esta promo ya no está disponible.
-        </div>
-      )}
-
       {/* Hero Section */}
       <section className="relative overflow-x-clip min-h-screen">
         {/* Background Effects — muy sutiles */}
@@ -775,105 +756,39 @@ export default function LandingPage() {
                 </div>
               )}
 
-              {/* Pack cards */}
+              {/* Participación gratuita: este sitio no vende chances */}
               {!sorteoCompleto && (
-                <div className="order-2 lg:order-4 space-y-4">
-                  <p className="pb-1 text-center text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
-                    Pagá desde Argentina o Paraguay
+                <div className="order-2 lg:order-4 space-y-4 border border-[#ff0040]/15 bg-gradient-to-b from-[#151517] to-[#0a0a0b] rounded-xl p-5 sm:p-6 text-center">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
+                    Participación 100% gratis
                   </p>
-                  {PACKS.map((pack, index) => (
-                    <div
-                      key={pack.chances}
-                      className={`transition-all duration-500 ${
-                        animacionVisible
-                          ? "opacity-100 translate-y-0"
-                          : "opacity-0 translate-y-6"
-                      }`}
-                      style={{ transitionDelay: `${(index + 3) * 150}ms` }}
-                    >
-                      <div
-                        className="pack-card relative"
-                        style={
-                          {
-                            "--shine-delay": `${index * 0.9}s`,
-                          } as CSSProperties
-                        }
-                      >
-                        <div className="px-5 py-5 sm:px-7 sm:py-6">
-                          <div className="pack-offer-layout grid grid-cols-[minmax(0,1fr)_190px] items-stretch gap-4 sm:grid-cols-[minmax(0,1fr)_260px] sm:gap-6">
-                            {/* Columna izquierda: cantidad protagonista */}
-                            <div className="pack-identity min-w-0">
-                              {pack.popular ? (
-                                <span className="pack-popular-badge">
-                                  ⭐ {contenido.packs_popular_label}
-                                </span>
-                              ) : null}
-                              <strong className="pack-quantity">
-                                {pack.chances}
-                              </strong>
-                              <span className="pack-unit">
-                                {pack.chances === 1
-                                  ? contenido.packs_unidad_singular
-                                  : contenido.packs_unidad_plural}
-                              </span>
-                            </div>
-                            {/* Columna derecha: precios fijos / CTA */}
-                            <div className="flex min-w-0 flex-col justify-center gap-3">
-                              <PreciosFijos
-                                precioArgentina={pack.precio}
-                                precioParaguay={pack.precioParaguay}
-                                porcentaje={
-                                  promoParaPack(pack.chances)?.porcentaje
-                                }
-                              />
-                              <Button
-                                onClick={() => handleCompra(pack)}
-                                className="btn-neon-pill h-auto w-full whitespace-nowrap rounded-full px-5 py-3 text-sm sm:px-8 sm:text-base"
-                              >
-                                <ShoppingCart className="w-4 h-4 mr-2" />
-                                {contenido.packs_comprar_boton}
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {sorteo ? (
-                    <div
-                      className={`transition-all duration-500 ${
-                        animacionVisible
-                          ? "opacity-100 translate-y-0"
-                          : "opacity-0 translate-y-6"
-                      }`}
-                      style={{
-                        transitionDelay: `${(PACKS.length + 3) * 150}ms`,
-                      }}
-                    >
-                      <CantidadPersonalizadaCard
-                        sorteo={sorteo}
-                        chancesRestantes={TOTAL_CHANCES - chancesVendidas}
-                        promoPorcentaje={(cantidad) =>
-                          promoParaPack(cantidad)?.porcentaje
-                        }
-                        onComprar={handleCompra}
-                      />
-                    </div>
-                  ) : null}
+                  <p className="text-gray-300">
+                    Completá el formulario y recibí tu número para el sorteo.
+                  </p>
+                  <a
+                    href="#participar"
+                    className="btn-neon-pill inline-flex w-full items-center justify-center rounded-full px-8 py-3 text-base font-semibold"
+                  >
+                    <Gift className="w-4 h-4 mr-2" />
+                    Participar gratis
+                  </a>
                 </div>
-              )}
-
-              {!sorteoCompleto && PACKS.length > 1 && (
-                <p className="order-5 lg:order-5 text-xs text-gray-600 text-center tracking-wide">
-                  {contenido.packs_nota}
-                </p>
               )}
             </div>
           </div>
         </div>
       </section>
 
-      <RankingEnVivo textos={obtenerTextosRanking(contenido)} />
+      {!sorteoCompleto && (
+        <section id="participar" className="scroll-mt-20 py-12">
+          <div className="container mx-auto px-4">
+            <div className="max-w-2xl mx-auto">
+              <IntroParticipacionGratuita />
+              <FormularioGratis />
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Sección Consultá tus números */}
       <section
@@ -1127,23 +1042,6 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
-
-      <CompraModalNuevo
-        isOpen={modalAbierto}
-        onClose={() => setModalAbierto(false)}
-        pack={packSeleccionado}
-        promoPorcentaje={
-          packSeleccionado
-            ? promoParaPack(packSeleccionado.chances)?.porcentaje
-            : undefined
-        }
-        onCompraTransferencia={procesarTransferencia}
-      />
-
-      <TransferenciaExitoModal
-        isOpen={transferenciaExitoAbierta}
-        onClose={() => setTransferenciaExitoAbierta(false)}
-      />
 
       <Toaster />
     </div>

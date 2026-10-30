@@ -19,11 +19,11 @@ if (!supabasePublishableKey) {
   );
 }
 
-// Schema de Postgres donde viven las tablas. El sitio principal usa "public";
-// la versión de sorteos gratis apunta al schema "gratis" de la misma base
-// (ver scripts/31-crear-schema-gratis.sql).
+// Schema de Postgres donde viven las tablas. Este sitio (sorteos gratis) usa
+// el schema "gratis" de la misma base que el sitio principal, que usa
+// "public" (ver scripts/31-crear-schema-gratis.sql).
 export const supabaseDbSchema =
-  process.env.NEXT_PUBLIC_SUPABASE_DB_SCHEMA || "public";
+  process.env.NEXT_PUBLIC_SUPABASE_DB_SCHEMA || "gratis";
 
 // En rutas de servidor se usa la service role. El navegador recibe únicamente
 // la publishable/anon key y queda sujeto a RLS.

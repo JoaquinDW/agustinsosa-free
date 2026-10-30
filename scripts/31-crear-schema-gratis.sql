@@ -11,9 +11,8 @@
 -- recrean con search_path = gratis, así que generar_numeros_unicos_atomico,
 -- obtener_estadisticas_sorteo, etc. operan sobre las tablas de "gratis".
 --
--- Datos: solo se copia `configuracion` (textos del sitio como punto de
--- partida) con sitio_publicado = false. Sorteos, compradores y demás quedan
--- vacíos.
+-- Datos: solo se copia `configuracion` (sin contenido_sitio) con
+-- sitio_publicado = false. Sorteos, compradores y demás quedan vacíos.
 --
 -- Al final se crea gratis.leads: contactos con consentimiento de marketing
 -- para promocionar el sitio principal.
@@ -74,8 +73,11 @@ BEGIN
       destino, r.relname, r.attname, format('%I.%I', destino, nueva_seq));
   END LOOP;
 
-  -- 3. Configuración inicial (textos del sitio), con el sitio despublicado.
-  INSERT INTO gratis.configuracion SELECT * FROM public.configuracion;
+  -- 3. Configuración inicial con el sitio despublicado. No se copian los
+  --    textos del sitio (contenido_sitio): el sitio gratis arranca con sus
+  --    propios textos por defecto y se editan desde su backoffice.
+  INSERT INTO gratis.configuracion
+  SELECT * FROM public.configuracion WHERE clave <> 'contenido_sitio';
   UPDATE gratis.configuracion SET valor = 'false' WHERE clave = 'sitio_publicado';
 
   -- 4. Foreign keys.

@@ -126,16 +126,16 @@ export type ClaveTextoContenido = {
 
 export const CONTENIDO_DEFAULTS: ContenidoSitio = {
   ...TEXTOS_RANKING_DEFAULTS,
-  rankingVisible: true,
+  rankingVisible: false,
   marca: "Sosa Motos",
   whatsapp_url: "https://wa.me/5493795152063",
 
   hero_badge: "Premio Exclusivo",
   hero_titulo: "¡Participá por {premio}!",
-  hero_subtitulo: "Compra que se van volando!",
-  hero_chances_label: "Números vendidos",
+  hero_subtitulo: "¡Participá gratis!",
+  hero_chances_label: "Números asignados",
   hero_completado_label: "completado",
-  hero_completo_titulo: "¡Todas las prendas vendidas!",
+  hero_completo_titulo: "¡Cupos completos!",
   hero_completo_descripcion:
     "El sorteo se realizará mañana a las 14:00 hs según el primer número de la Quiniela de Buenos Aires",
   hero_sorteado_titulo: "Resultados",
@@ -166,12 +166,12 @@ export const CONTENIDO_DEFAULTS: ContenidoSitio = {
   consulta_kicker: "Participantes",
   consulta_titulo: "¿Ya participaste?",
   consulta_descripcion:
-    "Ingresá el email con el que compraste para ver tus números asignados.",
+    "Ingresá el email con el que participaste para ver tu número asignado.",
   consulta_placeholder: "tucorreo@email.com",
   consulta_boton: "Consultar",
   consulta_vacio: "No encontramos participaciones confirmadas para ese email.",
   consulta_vacio_nota:
-    "Si pagaste por transferencia, tu pago puede estar pendiente de aprobación.",
+    "Revisá que sea el mismo email que usaste en el formulario.",
 
   express_kicker: "Premios instantáneos",
   express_titulo: "Ganadores Express",
