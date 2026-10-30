@@ -68,33 +68,10 @@ async function hasValidAdminSession(request: NextRequest): Promise<boolean> {
   }
 }
 
+// Sitio de sorteos gratis: siempre publicado. La pantalla "Próximamente" es
+// solo del sitio principal (agustinsosa.com).
 async function siteIsPublished(): Promise<boolean> {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceKey =
-    process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!supabaseUrl || !serviceKey) return false
-
-  try {
-    const response = await fetch(
-      `${supabaseUrl}/rest/v1/configuracion?clave=eq.sitio_publicado&select=valor&limit=1`,
-      {
-        headers: {
-          apikey: serviceKey,
-          Authorization: `Bearer ${serviceKey}`,
-          // Mismo schema que lib/supabase.ts: este sitio lee su propio
-          // sitio_publicado en "gratis", no el del sitio principal.
-          "Accept-Profile": process.env.NEXT_PUBLIC_SUPABASE_DB_SCHEMA || "gratis",
-        },
-        cache: "no-store",
-      },
-    )
-    if (!response.ok) return false
-
-    const rows = (await response.json()) as Array<{ valor?: string }>
-    return rows[0]?.valor === "true"
-  } catch {
-    return false
-  }
+  return true
 }
 
 export async function middleware(request: NextRequest) {

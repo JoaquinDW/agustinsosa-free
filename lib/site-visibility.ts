@@ -4,24 +4,10 @@ import { getAdminSession } from "@/lib/admin-api"
 
 export const SITE_VISIBILITY_KEY = "sitio_publicado"
 
+// Sitio de sorteos gratis: siempre publicado. La pantalla "Próximamente" es
+// solo del sitio principal (agustinsosa.com).
 export async function isSitePublished(): Promise<boolean> {
-  try {
-    const { data, error } = await supabaseAdmin
-      .from("configuracion")
-      .select("valor")
-      .eq("clave", SITE_VISIBILITY_KEY)
-      .maybeSingle()
-
-    if (error) {
-      console.error("No se pudo obtener el estado de publicación:", error)
-      return false
-    }
-
-    return data?.valor === "true"
-  } catch (error) {
-    console.error("Error obteniendo el estado de publicación:", error)
-    return false
-  }
+  return true
 }
 
 export async function setSitePublished(published: boolean): Promise<boolean> {
