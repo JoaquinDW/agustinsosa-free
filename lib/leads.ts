@@ -1,5 +1,5 @@
 import { supabase } from "./supabase"
-import { CONSENTIMIENTO_EMAIL, CONSENTIMIENTO_WHATSAPP } from "./consentimientos"
+import { CONSENTIMIENTO_NOVEDADES } from "./consentimientos"
 
 // Contactos de participantes gratuitos para promocionar el sitio principal.
 // Tabla gratis.leads (scripts/31-crear-schema-gratis.sql): una fila por
@@ -79,12 +79,7 @@ export async function registrarLead({
   const consentimiento =
     aceptaEmail || aceptaWhatsapp
       ? {
-          consentimiento_texto: [
-            aceptaEmail ? CONSENTIMIENTO_EMAIL : null,
-            aceptaWhatsapp ? CONSENTIMIENTO_WHATSAPP : null,
-          ]
-            .filter(Boolean)
-            .join(" "),
+          consentimiento_texto: CONSENTIMIENTO_NOVEDADES,
           consentimiento_at: ahora,
           consentimiento_ip: ip,
           // Volver a dar el consentimiento anula una baja anterior.

@@ -8,8 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { normalizarTelefono } from "@/lib/whatsapp/normalizar"
 import {
-  CONSENTIMIENTO_EMAIL,
-  CONSENTIMIENTO_WHATSAPP,
+  CONSENTIMIENTO_NOVEDADES,
   CUENTAS_INSTAGRAM,
   MAX_BYTES_CAPTURA,
   TIPOS_CAPTURA,
@@ -65,9 +64,8 @@ export function FormularioGratis({
   // Captura de que sigue a cada cuenta de Instagram (clave: id de la cuenta)
   const [capturas, setCapturas] = useState<Record<string, File>>({})
   const [aceptaBases, setAceptaBases] = useState(false)
-  // Consentimientos de marketing: opcionales y destildados por defecto.
-  const [aceptaEmail, setAceptaEmail] = useState(false)
-  const [aceptaWhatsapp, setAceptaWhatsapp] = useState(false)
+  // Consentimiento de marketing (email y WhatsApp): opcional y destildado por defecto.
+  const [aceptaNovedades, setAceptaNovedades] = useState(false)
 
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -108,8 +106,8 @@ export function FormularioGratis({
       body.append("nombre", nombre.trim())
       body.append("email", email.trim())
       body.append("telefono", telefono.trim())
-      body.append("aceptaEmail", String(aceptaEmail))
-      body.append("aceptaWhatsapp", String(aceptaWhatsapp))
+      body.append("aceptaEmail", String(aceptaNovedades))
+      body.append("aceptaWhatsapp", String(aceptaNovedades))
       body.append("origen", JSON.stringify(obtenerOrigen()))
       for (const cuenta of CUENTAS_INSTAGRAM) {
         body.append(`captura_${cuenta.id}`, capturas[cuenta.id])
@@ -254,11 +252,8 @@ export function FormularioGratis({
           </Link>
           .
         </Casilla>
-        <Casilla checked={aceptaEmail} onChange={setAceptaEmail} disabled={isLoading}>
-          {CONSENTIMIENTO_EMAIL}
-        </Casilla>
-        <Casilla checked={aceptaWhatsapp} onChange={setAceptaWhatsapp} disabled={isLoading}>
-          {CONSENTIMIENTO_WHATSAPP}
+        <Casilla checked={aceptaNovedades} onChange={setAceptaNovedades} disabled={isLoading}>
+          {CONSENTIMIENTO_NOVEDADES}
         </Casilla>
         <p className="text-xs text-gray-500">
           Recibir novedades es opcional y podés darte de baja cuando quieras.
