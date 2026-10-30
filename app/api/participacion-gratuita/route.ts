@@ -17,13 +17,12 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { nombre, email, telefono, direccion, encuesta, aceptaEmail, aceptaWhatsapp, origen } =
-      body ?? {}
+    const { nombre, email, telefono, aceptaEmail, aceptaWhatsapp, origen } = body ?? {}
 
     // Validar campos de contacto obligatorios
-    if (!nombre?.trim() || !email?.trim() || !telefono?.trim() || !direccion?.trim()) {
+    if (!nombre?.trim() || !email?.trim() || !telefono?.trim()) {
       return NextResponse.json(
-        { error: "Faltan datos obligatorios (nombre, email, teléfono y dirección)." },
+        { error: "Faltan datos obligatorios (nombre, email y teléfono)." },
         { status: 400 }
       )
     }
@@ -95,7 +94,6 @@ export async function POST(request: NextRequest) {
       email: emailNormalizado,
       telefono: telefono.trim(),
       numerosAsignados,
-      datosEncuesta: { direccion: direccion.trim(), ...(encuesta ?? {}) },
     })
 
     if (!nuevoComprador) {
