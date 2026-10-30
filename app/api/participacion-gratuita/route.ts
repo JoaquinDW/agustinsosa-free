@@ -10,14 +10,27 @@ import { enviarEmailConfirmacion } from "@/lib/email"
 import { requirePublishedSite } from "@/lib/site-visibility"
 import { normalizarTelefono } from "@/lib/whatsapp/normalizar"
 import { limpiarOrigen, registrarLead } from "@/lib/leads"
+import { CUENTAS_INSTAGRAM, MAX_BYTES_CAPTURA, TIPOS_CAPTURA } from "@/lib/consentimientos"
+import { uploadToSupabase } from "@/lib/supabase-storage"
 
 export async function POST(request: NextRequest) {
   const unpublished = await requirePublishedSite(request)
   if (unpublished) return unpublished
 
   try {
-    const body = await request.json()
-    const { nombre, email, telefono, aceptaEmail, aceptaWhatsapp, origen } = body ?? {}
+    // multipart/form-data: datos + una captura por cuenta de Instagram.
+    const formData = await request.formData()
+    const nombre = String(formData.get("nombre") || "")
+    const email = String(formData.get("email") || "")
+    const telefono = String(formData.get("telefono") || "")
+    const aceptaEmail = formData.get("aceptaEmail") === "true"
+    const aceptaWhatsapp = formData.get("aceptaWhatsapp") === "true"
+    let origen: unknown = null
+    try {
+      origen = JSON.parse(String(formData.get("origen") || "null"))
+    } catch {
+      origen = null
+    }
 
     // Validar campos de contacto obligatorios
     if (!nombre?.trim() || !email?.trim() || !telefono?.trim()) {
@@ -28,6 +41,26 @@ export async function POST(request: NextRequest) {
     }
     if (!normalizarTelefono(telefono)) {
       return NextResponse.json({ error: "Ingresá un número de teléfono válido." }, { status: 400 })
+    }
+
+    // Capturas de que sigue a las cuentas de Instagram (obligatorias)
+    const capturas: { cuenta: string; archivo: File; extension: string }[] = []
+    for (const cuenta of CUENTAS_INSTAGRAM) {
+      const archivo = formData.get(`captura_${cuenta.id}`)
+      if (!(archivo instanceof File) || archivo.size === 0) {
+        return NextResponse.json(
+          { error: `Falta la captura de que seguís a @${cuenta.id} en Instagram.` },
+          { status: 400 }
+        )
+      }
+      const extension = TIPOS_CAPTURA[archivo.type]
+      if (!extension || archivo.size > MAX_BYTES_CAPTURA) {
+        return NextResponse.json(
+          { error: "Las capturas deben ser imágenes (JPG, PNG, WebP o HEIC) de hasta 5 MB." },
+          { status: 400 }
+        )
+      }
+      capturas.push({ cuenta: cuenta.id, archivo, extension })
     }
 
     const emailNormalizado = email.trim().toLowerCase()
@@ -55,6 +88,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Ya participaste gratis en este sorteo con este email." },
         { status: 409 }
+      )
+    }
+
+    // Subir las capturas al bucket privado antes de asignar el número
+    const capturasInstagram: Record<string, string> = {}
+    try {
+      const base = `instagram/${sorteo.id}/${Date.now()}-${crypto.randomUUID()}`
+      for (const captura of capturas) {
+        capturasInstagram[captura.cuenta] = await uploadToSupabase(
+          captura.archivo,
+          "comprobantes",
+          `${base}-${captura.cuenta}.${captura.extension}`
+        )
+      }
+    } catch (uploadError) {
+      console.error("Error subiendo capturas de Instagram:", uploadError)
+      return NextResponse.json(
+        { error: "No se pudieron subir las capturas. Intentá nuevamente." },
+        { status: 500 }
       )
     }
 
@@ -94,6 +146,7 @@ export async function POST(request: NextRequest) {
       email: emailNormalizado,
       telefono: telefono.trim(),
       numerosAsignados,
+      datosEncuesta: { capturas_instagram: capturasInstagram },
     })
 
     if (!nuevoComprador) {
