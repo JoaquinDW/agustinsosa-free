@@ -2,12 +2,18 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react"
+import { ArrowLeft, Check, CheckCircle2, Instagram, Loader2, Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { normalizarTelefono } from "@/lib/whatsapp/normalizar"
-import { CONSENTIMIENTO_EMAIL, CONSENTIMIENTO_WHATSAPP } from "@/lib/consentimientos"
+import {
+  CONSENTIMIENTO_EMAIL,
+  CONSENTIMIENTO_WHATSAPP,
+  CUENTAS_INSTAGRAM,
+  MAX_BYTES_CAPTURA,
+  TIPOS_CAPTURA,
+} from "@/lib/consentimientos"
 
 // Origen de la visita (UTM de la URL y referrer) para saber de dónde viene
 // cada lead.
@@ -22,7 +28,31 @@ function obtenerOrigen(): Record<string, string> {
   return origen
 }
 
-/** Formulario de participación gratuita: datos de contacto + consentimientos. */
+// Vercel limita el cuerpo de cada request a ~4.5 MB, así que las capturas se
+// achican en el navegador (JPEG, lado mayor 1600 px) antes de subirlas. Si el
+// navegador no puede decodificar la imagen (p. ej. HEIC en Chrome), se envía
+// la original.
+async function reducirImagen(archivo: File): Promise<File> {
+  try {
+    const bitmap = await createImageBitmap(archivo)
+    const escala = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height))
+    const canvas = document.createElement("canvas")
+    canvas.width = Math.round(bitmap.width * escala)
+    canvas.height = Math.round(bitmap.height * escala)
+    canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/jpeg", 0.8),
+    )
+    if (!blob || blob.size >= archivo.size) return archivo
+    return new File([blob], archivo.name.replace(/\.[^.]+$/, "") + ".jpg", {
+      type: "image/jpeg",
+    })
+  } catch {
+    return archivo
+  }
+}
+
+/** Formulario de participación gratuita: datos, capturas de Instagram y consentimientos. */
 export function FormularioGratis({
   volverAlInicio = false,
 }: {
@@ -32,6 +62,8 @@ export function FormularioGratis({
   const [nombre, setNombre] = useState("")
   const [telefono, setTelefono] = useState("")
   const [email, setEmail] = useState("")
+  // Captura de que sigue a cada cuenta de Instagram (clave: id de la cuenta)
+  const [capturas, setCapturas] = useState<Record<string, File>>({})
   const [aceptaBases, setAceptaBases] = useState(false)
   // Consentimientos de marketing: opcionales y destildados por defecto.
   const [aceptaEmail, setAceptaEmail] = useState(false)
@@ -41,9 +73,21 @@ export function FormularioGratis({
   const [error, setError] = useState<string | null>(null)
   const [numeroAsignado, setNumeroAsignado] = useState<number | null>(null)
 
+  const capturasOk = CUENTAS_INSTAGRAM.every((cuenta) => capturas[cuenta.id])
   const formularioValido = Boolean(
-    nombre.trim() && telefono.trim() && email.trim() && aceptaBases,
+    nombre.trim() && telefono.trim() && email.trim() && capturasOk && aceptaBases,
   )
+
+  const elegirCaptura = async (cuentaId: string, archivo: File | undefined) => {
+    if (!archivo) return
+    const reducida = TIPOS_CAPTURA[archivo.type] ? await reducirImagen(archivo) : archivo
+    if (!TIPOS_CAPTURA[reducida.type] || reducida.size > MAX_BYTES_CAPTURA) {
+      setError("Las capturas deben ser imágenes (JPG, PNG, WebP o HEIC) de hasta 5 MB.")
+      return
+    }
+    setError(null)
+    setCapturas((prev) => ({ ...prev, [cuentaId]: reducida }))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -60,18 +104,18 @@ export function FormularioGratis({
     setError(null)
 
     try {
-      const res = await fetch("/api/participacion-gratuita", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nombre: nombre.trim(),
-          email: email.trim(),
-          telefono: telefono.trim(),
-          aceptaEmail,
-          aceptaWhatsapp,
-          origen: obtenerOrigen(),
-        }),
-      })
+      const body = new FormData()
+      body.append("nombre", nombre.trim())
+      body.append("email", email.trim())
+      body.append("telefono", telefono.trim())
+      body.append("aceptaEmail", String(aceptaEmail))
+      body.append("aceptaWhatsapp", String(aceptaWhatsapp))
+      body.append("origen", JSON.stringify(obtenerOrigen()))
+      for (const cuenta of CUENTAS_INSTAGRAM) {
+        body.append(`captura_${cuenta.id}`, capturas[cuenta.id])
+      }
+
+      const res = await fetch("/api/participacion-gratuita", { method: "POST", body })
 
       const data = await res.json()
 
@@ -154,6 +198,53 @@ export function FormularioGratis({
           disabled={isLoading}
         />
       </Field>
+
+      <div className="space-y-2">
+        <Label className="text-gray-200">
+          Seguí estas cuentas y subí una captura de cada una{" "}
+          <span className="text-[#ff0040]">*</span>
+        </Label>
+        {CUENTAS_INSTAGRAM.map((cuenta) => (
+          <div
+            key={cuenta.id}
+            className="flex items-center gap-3 rounded-lg border border-white/10 bg-black/30 p-3"
+          >
+            <a
+              href={cuenta.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex min-w-0 flex-1 items-center gap-2 text-sm text-white hover:underline"
+            >
+              <Instagram className="h-4 w-4 shrink-0 text-[#ff0040]" />
+              <span className="truncate">{cuenta.nombre}</span>
+            </a>
+            <label
+              className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${
+                capturas[cuenta.id]
+                  ? "bg-green-500/15 text-green-300"
+                  : "bg-white/10 text-gray-200 hover:bg-white/20"
+              }`}
+            >
+              {capturas[cuenta.id] ? (
+                <>
+                  <Check className="h-3.5 w-3.5" /> Captura lista
+                </>
+              ) : (
+                <>
+                  <Upload className="h-3.5 w-3.5" /> Subir captura
+                </>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                disabled={isLoading}
+                onChange={(e) => elegirCaptura(cuenta.id, e.target.files?.[0])}
+              />
+            </label>
+          </div>
+        ))}
+      </div>
 
       <div className="space-y-2.5 pt-1 text-sm">
         <Casilla checked={aceptaBases} onChange={setAceptaBases} disabled={isLoading}>

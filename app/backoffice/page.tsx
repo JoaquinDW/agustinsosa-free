@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { CUENTAS_INSTAGRAM } from "@/lib/consentimientos";
 import * as XLSX from "xlsx";
 
 // Helper function para detectar si un string es un número de teléfono o un usuario de Instagram
@@ -1685,6 +1686,24 @@ export default function BackofficePage() {
                                   </Badge>
                                 )}
                               </div>
+                              {comprador.datos_encuesta?.capturas_instagram && (
+                                <div className="mt-1 flex flex-wrap gap-2 text-xs">
+                                  {CUENTAS_INSTAGRAM.filter(
+                                    (cuenta) =>
+                                      comprador.datos_encuesta?.capturas_instagram?.[cuenta.id],
+                                  ).map((cuenta) => (
+                                    <a
+                                      key={cuenta.id}
+                                      href={`/api/admin/capturas/${comprador.id}?cuenta=${encodeURIComponent(cuenta.id)}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-600 underline"
+                                    >
+                                      📸 @{cuenta.id}
+                                    </a>
+                                  ))}
+                                </div>
+                              )}
                             </TableCell>
                             <TableCell>
                               {comprador.email ? (
