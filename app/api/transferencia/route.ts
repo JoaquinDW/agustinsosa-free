@@ -10,7 +10,16 @@ import { normalizarTelefono } from "@/lib/whatsapp/normalizar";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export async function POST(request: NextRequest) {
+// Sitio de sorteos gratis: no se venden chances. La única forma de participar
+// es /api/participacion-gratuita. El flujo de compra queda abajo, sin exportar.
+export async function POST() {
+  return NextResponse.json(
+    { error: "Este sitio no acepta compras." },
+    { status: 410 },
+  );
+}
+
+async function crearCompraPorTransferencia(request: NextRequest) {
   const unpublished = await requirePublishedSite(request);
   if (unpublished) return unpublished;
 

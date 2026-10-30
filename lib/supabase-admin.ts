@@ -19,8 +19,8 @@ if (!supabaseSecretKey) {
   throw new Error("Missing SUPABASE_SECRET_KEY environment variable")
 }
 
-// Mismo schema que lib/supabase.ts ("public" o "gratis").
-const supabaseDbSchema = process.env.NEXT_PUBLIC_SUPABASE_DB_SCHEMA || "public"
+// Mismo schema que lib/supabase.ts ("gratis" por defecto en este sitio).
+const supabaseDbSchema = process.env.NEXT_PUBLIC_SUPABASE_DB_SCHEMA || "gratis"
 
 export const supabaseAdmin = createClient(supabaseUrl, supabaseSecretKey, {
   db: { schema: supabaseDbSchema as "public" },

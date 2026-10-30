@@ -2,6 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## This repo: free-raffle site
+
+This is a copy of `JoaquinDW/sorteo-sosa-motos` for **free raffles only** (client Agustín Sosa). Its purpose is to collect participant contacts to later promote the main paid site. Differences from the main site:
+
+- Uses the `gratis` Postgres schema of the **same** Supabase project (`NEXT_PUBLIC_SUPABASE_DB_SCHEMA`, default `gratis` here). Create it with `scripts/31-crear-schema-gratis.sql` and add `gratis` under Data API → Exposed schemas.
+- The home (`app/page.tsx`) shows the free participation form (`components/formulario-gratis.tsx`) instead of packs. `/free` renders the same form. The ranking is hidden by default.
+- `/api/transferencia` returns 410: no chances are sold here.
+- Each free participation also upserts `gratis.leads` (`lib/leads.ts`) with optional, unticked-by-default marketing consent per channel (email / WhatsApp). The exact accepted text (`lib/consentimientos.ts`), timestamp, IP and UTM origin are stored. Only contact leads with `baja_at IS NULL` and the matching `acepta_*` flag.
+
+The rest of this file describes the shared codebase inherited from the main site.
+
 ## Commands
 
 ```bash

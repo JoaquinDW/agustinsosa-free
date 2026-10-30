@@ -9,6 +9,7 @@ import { verificarNumerosUnicos } from "@/lib/verificarNumerosUnicos"
 import { enviarEmailConfirmacion } from "@/lib/email"
 import { requirePublishedSite } from "@/lib/site-visibility"
 import { normalizarTelefono } from "@/lib/whatsapp/normalizar"
+import { limpiarOrigen, registrarLead } from "@/lib/leads"
 
 export async function POST(request: NextRequest) {
   const unpublished = await requirePublishedSite(request)
@@ -16,7 +17,8 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { nombre, email, telefono, direccion, encuesta } = body ?? {}
+    const { nombre, email, telefono, direccion, encuesta, aceptaEmail, aceptaWhatsapp, origen } =
+      body ?? {}
 
     // Validar campos de contacto obligatorios
     if (!nombre?.trim() || !email?.trim() || !telefono?.trim() || !direccion?.trim()) {
@@ -101,6 +103,25 @@ export async function POST(request: NextRequest) {
         { error: "Error registrando tu participación." },
         { status: 500 }
       )
+    }
+
+    // Guardar el contacto para promociones del sitio principal. Si falla, la
+    // participación ya quedó registrada: no se le devuelve error al usuario.
+    try {
+      const telefonoNormalizado = normalizarTelefono(telefono)
+      await registrarLead({
+        nombre: nombre.trim(),
+        email: emailNormalizado,
+        telefono: telefonoNormalizado,
+        pais: telefonoNormalizado?.startsWith("595") ? "PY" : "AR",
+        aceptaEmail: aceptaEmail === true,
+        aceptaWhatsapp: aceptaWhatsapp === true,
+        ip: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null,
+        origen: limpiarOrigen(origen),
+        sorteoId: sorteo.id,
+      })
+    } catch (leadError) {
+      console.error("Error registrando lead:", leadError)
     }
 
     // Enviar email de confirmación directamente (no fallar la operación si el email falla).
