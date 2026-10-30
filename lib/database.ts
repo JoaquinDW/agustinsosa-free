@@ -1886,9 +1886,12 @@ async function verificarSorteoCompletoAPI(sorteoId: string): Promise<void> {
 // FUNCIONES PARA GANADORES PASADOS
 // ============================================
 
+// Los ganadores anteriores se muestran desde el sitio principal (schema
+// "public"): se cargan y editan solo en el backoffice de agustinsosa.com.
 export async function obtenerGanadoresPasados() {
   try {
     const { data, error } = await supabase
+      .schema("public")
       .from("ganadores_pasados")
       .select("*")
       .eq("visible", true)
