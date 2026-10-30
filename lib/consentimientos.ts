@@ -1,9 +1,8 @@
 // Textos que ve el participante. Se guarda en la base el texto exacto que
 // aceptó, así que si se cambian, los leads anteriores conservan el suyo.
-export const CONSENTIMIENTO_EMAIL =
-  "Quiero recibir por email novedades y promociones de Agustín Sosa."
-export const CONSENTIMIENTO_WHATSAPP =
-  "Quiero recibir por WhatsApp novedades y promociones de Agustín Sosa."
+// Una sola casilla cubre ambos canales (email y WhatsApp).
+export const CONSENTIMIENTO_NOVEDADES =
+  "Quiero recibir por email y WhatsApp novedades y promociones de Agustín Sosa."
 
 // Cuentas de Instagram que hay que seguir para participar. Cada participante
 // sube una captura por cuenta; se guardan en datos_encuesta.capturas_instagram
