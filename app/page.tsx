@@ -3,10 +3,9 @@
 import { useState, useEffect, type CSSProperties } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Clock, Gift, Trophy } from "lucide-react"
+import { Clock, Trophy } from "lucide-react"
 import Link from "next/link"
 import { FormularioGratis } from "@/components/formulario-gratis"
-import { IntroParticipacionGratuita } from "@/components/intro-participacion-gratuita"
 import { Header } from "@/components/header"
 import { GanadoresPasados } from "@/components/ganadores-pasados"
 import { GanadoresExpress } from "@/components/ganadores-express"
@@ -756,22 +755,13 @@ export default function LandingPage() {
                 </div>
               )}
 
-              {/* Participación gratuita: este sitio no vende chances */}
+              {/* Participación gratuita: en lugar de los packs del sitio principal */}
               {!sorteoCompleto && (
-                <div className="order-2 lg:order-4 space-y-4 border border-[#ff0040]/15 bg-gradient-to-b from-[#151517] to-[#0a0a0b] rounded-xl p-5 sm:p-6 text-center">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
-                    Participación 100% gratis
+                <div className="order-2 lg:order-4 space-y-4">
+                  <p className="pb-1 text-center text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
+                    Participá gratis desde Argentina o Paraguay
                   </p>
-                  <p className="text-gray-300">
-                    Completá el formulario y recibí tu número para el sorteo.
-                  </p>
-                  <a
-                    href="#participar"
-                    className="btn-neon-pill inline-flex w-full items-center justify-center rounded-full px-8 py-3 text-base font-semibold"
-                  >
-                    <Gift className="w-4 h-4 mr-2" />
-                    Participar gratis
-                  </a>
+                  <FormularioGratis />
                 </div>
               )}
             </div>
@@ -779,16 +769,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {!sorteoCompleto && (
-        <section id="participar" className="scroll-mt-20 py-12">
-          <div className="container mx-auto px-4">
-            <div className="max-w-2xl mx-auto">
-              <IntroParticipacionGratuita />
-              <FormularioGratis />
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* Sección Consultá tus números */}
       <section
