@@ -18,10 +18,14 @@ const dmSans = DM_Sans({
   display: "swap",
 })
 
+const TITULO = "Sorteos gratis | Agustín Sosa"
+const DESCRIPCION =
+  "Participá gratis en los sorteos de Agustín Sosa y Sosa Motos. Dejá tus datos y recibí tu número al instante."
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.sosamotos.com.ar"),
-  title: "Sosa Motos",
-  description: "Web demo de Sosa Motos",
+  metadataBase: new URL("https://www.agustinsosa.online"),
+  title: TITULO,
+  description: DESCRIPCION,
   generator: "v0.dev",
   icons: {
     icon: "/sosamotos.jpeg",
@@ -30,10 +34,10 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
-    url: "https://www.sosamotos.com.ar",
-    siteName: "Sosa Motos",
-    title: "Sosa Motos",
-    description: "Web demo de Sosa Motos",
+    url: "https://www.agustinsosa.online",
+    siteName: "Agustín Sosa",
+    title: TITULO,
+    description: DESCRIPCION,
     images: [
       {
         url: "/sosamotos.jpeg",
@@ -45,8 +49,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Sosa Motos",
-    description: "Web demo de Sosa Motos",
+    title: TITULO,
+    description: DESCRIPCION,
     images: ["/sosamotos.jpeg"],
   },
 }
