@@ -43,6 +43,7 @@ export async function registrarLead({
   nombre,
   email,
   telefono,
+  instagram,
   pais,
   aceptaEmail,
   aceptaWhatsapp,
@@ -53,6 +54,7 @@ export async function registrarLead({
   nombre: string
   email: string
   telefono: string | null
+  instagram: string | null
   pais: "AR" | "PY"
   aceptaEmail: boolean
   aceptaWhatsapp: boolean
@@ -94,6 +96,7 @@ export async function registrarLead({
       nombre,
       email: emailNormalizado,
       telefono,
+      instagram,
       pais,
       acepta_email: aceptaEmail,
       acepta_whatsapp: aceptaWhatsapp,
@@ -113,6 +116,7 @@ export async function registrarLead({
       nombre,
       email: existente.email ?? emailNormalizado,
       telefono: existente.telefono ?? telefono,
+      instagram: instagram ?? existente.instagram,
       pais: existente.pais ?? pais,
       acepta_email: existente.acepta_email || aceptaEmail,
       acepta_whatsapp: existente.acepta_whatsapp || aceptaWhatsapp,

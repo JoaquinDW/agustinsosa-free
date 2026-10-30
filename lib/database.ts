@@ -1436,6 +1436,41 @@ export async function existeParticipacionGratuita(
   }
 }
 
+// Una participación gratuita por persona y sorteo: devuelve qué dato ya se usó
+// (email, teléfono normalizado o usuario de Instagram), o null si no hay
+// duplicado. Respaldado por índices únicos (scripts/32-gratis-unicos.sql).
+export async function buscarParticipacionGratuitaDuplicada(
+  sorteoId: string,
+  { email, telefono, instagram }: { email: string; telefono: string; instagram: string },
+): Promise<"email" | "telefono" | "instagram" | null> {
+  const emailNormalizado = email.trim().toLowerCase();
+  // Valores ya normalizados (solo [a-z0-9._@+-]); las comillas protegen los
+  // caracteres reservados de PostgREST dentro de or().
+  const sinComillas = (valor: string) => valor.replace(/["\\]/g, "");
+  const { data, error } = await supabase
+    .from("compradores")
+    .select("email, telefono, datos_encuesta")
+    .eq("sorteo_id", sorteoId)
+    .eq("metodo_pago", "gratuito")
+    .or(
+      [
+        `email.eq."${sinComillas(emailNormalizado)}"`,
+        `telefono.eq.${sinComillas(telefono)}`,
+        `datos_encuesta->>instagram.eq."${sinComillas(instagram)}"`,
+      ].join(","),
+    )
+    .limit(5);
+
+  if (error) throw error;
+
+  for (const fila of data ?? []) {
+    if (fila.email?.toLowerCase() === emailNormalizado) return "email";
+    if (fila.telefono === telefono) return "telefono";
+    if (fila.datos_encuesta?.instagram === instagram) return "instagram";
+  }
+  return null;
+}
+
 // Crear participante gratuito (página /free): 1 número, sin pago.
 // estado_pago = 'pagado' para entrar al pool y ser elegible; metodo_pago = 'gratuito' como marca.
 export async function crearCompradorGratuito({
