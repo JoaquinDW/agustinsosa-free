@@ -41,12 +41,6 @@ export function Header({ marca = "Sosa Motos", rankingVisible = false }: { marca
             >
               Tus números
             </Link>
-            <Link
-              href="/#ganadores"
-              className="text-gray-400 hover:text-white transition-colors duration-200 text-sm tracking-wide"
-            >
-              Ganadores
-            </Link>
             {rankingVisible && (
               <Link href="/ranking" className="text-gray-400 hover:text-white transition-colors duration-200 text-sm tracking-wide">
                 Ranking
@@ -84,13 +78,6 @@ export function Header({ marca = "Sosa Motos", rankingVisible = false }: { marca
                 onClick={() => setMenuAbierto(false)}
               >
                 Mis números
-              </Link>
-              <Link
-                href="/#ganadores"
-                className="text-gray-400 hover:text-white transition-colors duration-200 px-2 py-2 text-sm tracking-wide"
-                onClick={() => setMenuAbierto(false)}
-              >
-                Ganadores
               </Link>
               {rankingVisible && (
                 <Link href="/ranking" className="text-gray-400 hover:text-white transition-colors duration-200 px-2 py-2 text-sm tracking-wide" onClick={() => setMenuAbierto(false)}>

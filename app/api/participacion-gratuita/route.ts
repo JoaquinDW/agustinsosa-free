@@ -11,7 +11,9 @@ import { requirePublishedSite } from "@/lib/site-visibility"
 import { normalizarTelefono } from "@/lib/whatsapp/normalizar"
 import { limpiarOrigen, registrarLead } from "@/lib/leads"
 import {
-  CUENTAS_INSTAGRAM,
+  CANAL_WHATSAPP_URL,
+  CUENTA_INSTAGRAM_REQUERIDA,
+  SOLICITAR_CAPTURA_INSTAGRAM,
   MAX_BYTES_CAPTURA,
   TIPOS_CAPTURA,
   normalizarInstagram,
@@ -23,7 +25,7 @@ export async function POST(request: NextRequest) {
   if (unpublished) return unpublished
 
   try {
-    // multipart/form-data: datos + una captura por cuenta de Instagram.
+    // multipart/form-data: datos y confirmación del canal. Captura temporalmente deshabilitada.
     const formData = await request.formData()
     const nombre = String(formData.get("nombre") || "")
     const email = String(formData.get("email") || "")
@@ -31,6 +33,19 @@ export async function POST(request: NextRequest) {
     const instagram = normalizarInstagram(String(formData.get("instagram") || ""))
     const aceptaEmail = formData.get("aceptaEmail") === "true"
     const aceptaWhatsapp = formData.get("aceptaWhatsapp") === "true"
+    const sigueCanalWhatsapp = formData.get("sigueCanalWhatsapp") === "true"
+    if (!sigueCanalWhatsapp) {
+      return NextResponse.json(
+        { error: "Entrá al canal de WhatsApp y marcá «Ya sigo el canal»." },
+        { status: 400 }
+      )
+    }
+    if (formData.get("aceptaBases") !== "true") {
+      return NextResponse.json(
+        { error: "Confirmá que sos mayor de 18 años y aceptás las bases." },
+        { status: 400 }
+      )
+    }
     let origen: unknown = null
     try {
       origen = JSON.parse(String(formData.get("origen") || "null"))
@@ -58,9 +73,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Capturas de que sigue a las cuentas de Instagram (obligatorias)
+    // La captura de Agustín queda deshabilitada hasta que se vuelva a solicitar.
     const capturas: { cuenta: string; archivo: File; extension: string }[] = []
-    for (const cuenta of CUENTAS_INSTAGRAM) {
+    for (const cuenta of SOLICITAR_CAPTURA_INSTAGRAM ? [CUENTA_INSTAGRAM_REQUERIDA] : []) {
       const archivo = formData.get(`captura_${cuenta.id}`)
       if (!(archivo instanceof File) || archivo.size === 0) {
         return NextResponse.json(
@@ -175,7 +190,12 @@ export async function POST(request: NextRequest) {
       email: emailNormalizado,
       telefono: telefonoNormalizado,
       numerosAsignados,
-      datosEncuesta: { instagram, capturas_instagram: capturasInstagram },
+      datosEncuesta: {
+        instagram,
+        capturas_instagram: capturasInstagram,
+        // Declaración del participante; no implica verificación con WhatsApp.
+        canal_whatsapp: { url: CANAL_WHATSAPP_URL, confirmado: sigueCanalWhatsapp },
+      },
     })
 
     // Si otra participación con los mismos datos entró a la vez, el índice

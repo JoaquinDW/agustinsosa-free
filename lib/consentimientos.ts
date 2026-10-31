@@ -4,9 +4,9 @@
 export const CONSENTIMIENTO_NOVEDADES =
   "Quiero recibir por email y WhatsApp novedades y promociones de Agustín Sosa."
 
-// Cuentas de Instagram que hay que seguir para participar. Cada participante
-// sube una captura por cuenta; se guardan en datos_encuesta.capturas_instagram
-// con la clave `id`.
+export const CANAL_WHATSAPP_URL = "https://whatsapp.com/channel/0029VaB9bCi6GcGLs2JEvM12"
+
+// Se conserva el listado histórico para abrir capturas de inscripciones anteriores.
 export const CUENTAS_INSTAGRAM = [
   {
     id: "agustinsosamotoss",
@@ -19,6 +19,13 @@ export const CUENTAS_INSTAGRAM = [
     url: "https://www.instagram.com/sosa.motos.oficial/",
   },
 ] as const
+
+// Única cuenta requerida para las nuevas participaciones.
+export const CUENTA_INSTAGRAM_REQUERIDA = CUENTAS_INSTAGRAM[0]
+
+// Temporalmente no se pide comprobante: el requisito de seguir en Instagram continúa.
+// Compartido entre formulario y API para permitir la inscripción sin adjuntos.
+export const SOLICITAR_CAPTURA_INSTAGRAM = false
 
 export const TIPOS_CAPTURA: Record<string, string> = {
   "image/jpeg": "jpg",

@@ -1,15 +1,17 @@
 "use client"
 
-import { useState } from "react"
+import { useId, useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, Check, CheckCircle2, ExternalLink, Instagram, Loader2, Upload } from "lucide-react"
+import { ArrowLeft, Check, CheckCircle2, ExternalLink, Instagram, Loader2, MessageCircle, Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { normalizarTelefono } from "@/lib/whatsapp/normalizar"
 import {
   CONSENTIMIENTO_NOVEDADES,
-  CUENTAS_INSTAGRAM,
+  CANAL_WHATSAPP_URL,
+  CUENTA_INSTAGRAM_REQUERIDA,
+  SOLICITAR_CAPTURA_INSTAGRAM,
   MAX_BYTES_CAPTURA,
   TIPOS_CAPTURA,
   normalizarInstagram,
@@ -52,19 +54,20 @@ async function reducirImagen(archivo: File): Promise<File> {
   }
 }
 
-/** Formulario de participación gratuita: datos, capturas de Instagram y consentimientos. */
+/** Tres pasos: Instagram, canal de WhatsApp y datos de contacto. */
 export function FormularioGratis({
   volverAlInicio = false,
 }: {
   /** Muestra "Volver al Inicio" en la pantalla de éxito (página /free). */
   volverAlInicio?: boolean
 }) {
+  const id = useId()
+  const [sigueCanalWhatsapp, setSigueCanalWhatsapp] = useState(false)
   const [nombre, setNombre] = useState("")
   const [telefono, setTelefono] = useState("")
   const [email, setEmail] = useState("")
   const [instagram, setInstagram] = useState("")
-  // Captura de que sigue a cada cuenta de Instagram (clave: id de la cuenta)
-  const [capturas, setCapturas] = useState<Record<string, File>>({})
+  const [captura, setCaptura] = useState<File | null>(null)
   const [aceptaBases, setAceptaBases] = useState(false)
   // Consentimiento de marketing (email y WhatsApp): opcional y destildado por defecto.
   const [aceptaNovedades, setAceptaNovedades] = useState(false)
@@ -73,20 +76,15 @@ export function FormularioGratis({
   const [error, setError] = useState<string | null>(null)
   const [numeroAsignado, setNumeroAsignado] = useState<number | null>(null)
 
-  const capturasOk = CUENTAS_INSTAGRAM.every((cuenta) => capturas[cuenta.id])
-  const formularioValido = Boolean(
-    nombre.trim() && telefono.trim() && email.trim() && instagram.trim() && capturasOk && aceptaBases,
-  )
-
-  const elegirCaptura = async (cuentaId: string, archivo: File | undefined) => {
+  const elegirCaptura = async (archivo: File | undefined) => {
     if (!archivo) return
     const reducida = TIPOS_CAPTURA[archivo.type] ? await reducirImagen(archivo) : archivo
     if (!TIPOS_CAPTURA[reducida.type] || reducida.size > MAX_BYTES_CAPTURA) {
-      setError("Las capturas deben ser imágenes (JPG, PNG, WebP o HEIC) de hasta 5 MB.")
+      setError("Elegí una imagen JPG, PNG, WebP o HEIC de hasta 5 MB.")
       return
     }
     setError(null)
-    setCapturas((prev) => ({ ...prev, [cuentaId]: reducida }))
+    setCaptura(reducida)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -95,7 +93,12 @@ export function FormularioGratis({
       setError("La participación se habilita cuando el sitio está publicado.")
       return
     }
-    if (!formularioValido || isLoading) return
+    if (isLoading) return
+    if (SOLICITAR_CAPTURA_INSTAGRAM && !captura) {
+      setError("Subí una captura donde se vea que seguís a Agustín.")
+      document.getElementById(`${id}-captura`)?.focus()
+      return
+    }
     if (!normalizarTelefono(telefono)) {
       setError("Ingresá un número de teléfono válido. Si es de Paraguay, incluí +595.")
       return
@@ -113,11 +116,13 @@ export function FormularioGratis({
       body.append("email", email.trim())
       body.append("telefono", telefono.trim())
       body.append("instagram", instagram.trim())
+      body.append("sigueCanalWhatsapp", String(sigueCanalWhatsapp))
+      body.append("aceptaBases", String(aceptaBases))
       body.append("aceptaEmail", String(aceptaNovedades))
       body.append("aceptaWhatsapp", String(aceptaNovedades))
       body.append("origen", JSON.stringify(obtenerOrigen()))
-      for (const cuenta of CUENTAS_INSTAGRAM) {
-        body.append(`captura_${cuenta.id}`, capturas[cuenta.id])
+      if (SOLICITAR_CAPTURA_INSTAGRAM && captura) {
+        body.append(`captura_${CUENTA_INSTAGRAM_REQUERIDA.id}`, captura)
       }
 
       const res = await fetch("/api/participacion-gratuita", { method: "POST", body })
@@ -146,11 +151,10 @@ export function FormularioGratis({
         <h2 className="text-2xl font-bold text-white mb-2">
           ¡Participación confirmada!
         </h2>
-        <p className="text-gray-400 mb-5 text-sm">
-          Tu número quedó registrado y entra al sorteo. Te enviamos un email con
-          la confirmación.
+        <p className="text-gray-300 mb-5 text-base">
+          Ya estás participando. Te enviamos la confirmación por email.
         </p>
-        <p className="text-xs uppercase tracking-widest text-gray-500 mb-1">
+        <p className="text-base text-gray-300 mb-1">
           Tu número
         </p>
         <div className="text-5xl font-extrabold neon-text font-mono mb-6">
@@ -172,124 +176,130 @@ export function FormularioGratis({
   return (
     <form
       onSubmit={handleSubmit}
-      className="pack-card relative px-5 py-6 sm:px-7 space-y-4"
+      className="pack-card relative space-y-8 px-5 py-7 sm:px-7"
     >
-      {/* Requisitos: seguir las cuentas de Instagram y subir una captura de cada una */}
-      <div className="rounded-xl border border-[#ff0040]/40 bg-[#ff0040]/[0.06] p-4">
-        <div className="mb-1 flex items-center justify-between gap-2">
-          <p className="text-sm font-bold uppercase tracking-wider text-white">
-            Requisitos para participar
-          </p>
-          <span className="rounded-full bg-[#ff0040] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
-            Obligatorio
-          </span>
-        </div>
-        <p className="mb-3 text-xs text-gray-400">
-          Seguí estas dos cuentas, sacá una captura de cada perfil donde se vea que
-          las seguís y subila acá. Sin las dos capturas no se puede participar.
-        </p>
-        <div className="space-y-2.5">
-          {CUENTAS_INSTAGRAM.map((cuenta, indice) => (
-            <div key={cuenta.id} className="rounded-lg border border-white/10 bg-black/40 p-3">
-              <div className="mb-2.5 flex items-center gap-2">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-white">
-                  {indice + 1}
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-white">
-                    Seguí a {cuenta.nombre} <span className="text-[#ff0040]">*</span>
-                  </p>
-                  <p className="truncate text-xs text-gray-400">@{cuenta.id}</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <a
-                  href={cuenta.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-[#f58529] via-[#dd2a7b] to-[#8134af] px-2 py-2.5 text-xs font-bold text-white transition-opacity hover:opacity-90 sm:text-sm"
-                >
-                  <Instagram className="h-4 w-4 shrink-0" />
-                  Seguir
-                  <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-80" />
-                </a>
-                <label
-                  className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-lg px-2 py-2.5 text-xs font-bold sm:text-sm ${
-                    capturas[cuenta.id]
-                      ? "bg-green-500/15 text-green-300 ring-1 ring-green-500/40"
-                      : "bg-white/10 text-white ring-1 ring-white/20 hover:bg-white/20"
-                  }`}
-                >
-                  {capturas[cuenta.id] ? (
-                    <>
-                      <Check className="h-4 w-4 shrink-0" /> Captura lista
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="h-4 w-4 shrink-0" /> Subir captura
-                    </>
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="sr-only"
-                    disabled={isLoading}
-                    onChange={(e) => elegirCaptura(cuenta.id, e.target.files?.[0])}
-                  />
-                </label>
-              </div>
-            </div>
-          ))}
-        </div>
-        <p className="mt-3 text-xs text-gray-400">
-          Además: ser mayor de 18 años, vivir en Argentina o Paraguay y participar una
-          sola vez por sorteo (mismo email, WhatsApp o Instagram no se aceptan dos veces).
-        </p>
-      </div>
+      <h2 className="text-2xl font-bold text-white">Participá en 3 pasos</h2>
 
-      <Field label="Nombre y apellido">
-        <Input
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          placeholder="Tu nombre completo"
-          autoComplete="name"
-          disabled={isLoading}
-        />
-      </Field>
-      <Field label="Tu usuario de Instagram">
-        <Input
-          value={instagram}
-          onChange={(e) => setInstagram(e.target.value)}
-          placeholder="@tuusuario"
-          autoCapitalize="none"
-          autoCorrect="off"
-          spellCheck={false}
-          disabled={isLoading}
-        />
-      </Field>
-      <Field label="WhatsApp">
-        <Input
-          type="tel"
-          value={telefono}
-          onChange={(e) => setTelefono(e.target.value)}
-          placeholder="Ej: 379 4123456"
-          autoComplete="tel"
-          disabled={isLoading}
-        />
-      </Field>
-      <Field label="Email">
-        <Input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="tu@email.com"
-          autoComplete="email"
-          disabled={isLoading}
-        />
-      </Field>
+      <section aria-labelledby={`${id}-instagram-titulo`} className="space-y-4">
+        <Paso numero={1} id={`${id}-instagram-titulo`}>Seguí a Agustín Sosa</Paso>
+        <a
+          href={CUENTA_INSTAGRAM_REQUERIDA.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#c72b68] px-4 py-3 text-base font-bold text-white transition-colors hover:bg-[#ae245a] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+        >
+          <Instagram className="h-5 w-5 shrink-0" aria-hidden="true" />
+          Seguir en Instagram
+          <ExternalLink className="h-4 w-4 shrink-0" aria-hidden="true" />
+        </a>
+        {SOLICITAR_CAPTURA_INSTAGRAM && (
+          <>
+            <p id={`${id}-captura-ayuda`} className="text-base text-zinc-300">
+              Después, subí una captura que muestre que lo seguís.
+            </p>
+            <label
+              className={`relative flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-3 text-base font-semibold ring-1 focus-within:outline focus-within:outline-2 focus-within:outline-offset-4 focus-within:outline-white ${
+                captura
+                  ? "bg-green-500/15 text-green-300 ring-green-500/40"
+                  : "bg-white/10 text-white ring-white/25 hover:bg-white/15"
+              }`}
+            >
+              {captura ? <Check className="h-5 w-5" aria-hidden="true" /> : <Upload className="h-5 w-5" aria-hidden="true" />}
+              <span aria-live="polite">{captura ? "Captura lista · Cambiar" : "Subir captura"}</span>
+              <input
+                id={`${id}-captura`}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                aria-describedby={`${id}-captura-ayuda`}
+                className="sr-only"
+                disabled={isLoading}
+                onChange={(e) => {
+                  void elegirCaptura(e.target.files?.[0])
+                  e.target.value = ""
+                }}
+              />
+            </label>
+          </>
+        )}
+      </section>
 
-      <div className="space-y-2.5 pt-1 text-sm">
-        <Casilla checked={aceptaBases} onChange={setAceptaBases} disabled={isLoading}>
+      <section aria-labelledby={`${id}-whatsapp-titulo`} className="space-y-4 border-t border-white/15 pt-6">
+        <Paso numero={2} id={`${id}-whatsapp-titulo`}>Sumate al canal de WhatsApp</Paso>
+        <a
+          href={CANAL_WHATSAPP_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#176f3b] px-4 py-3 text-base font-bold text-white transition-colors hover:bg-[#125c30] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+        >
+          <MessageCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
+          Entrar al canal
+          <ExternalLink className="h-4 w-4 shrink-0" aria-hidden="true" />
+        </a>
+        <p className="text-base text-zinc-300">Tocá «Seguir» dentro de WhatsApp y volvé acá.</p>
+        <Casilla checked={sigueCanalWhatsapp} onChange={setSigueCanalWhatsapp} disabled={isLoading} required>
+          Ya sigo el canal
+        </Casilla>
+      </section>
+
+      <section aria-labelledby={`${id}-datos-titulo`} className="space-y-5 border-t border-white/15 pt-6">
+        <Paso numero={3} id={`${id}-datos-titulo`}>Completá tus datos</Paso>
+        <p className="text-base text-zinc-300">Mayores de 18 años de Argentina o Paraguay. Una participación por persona.</p>
+        <Field label="Nombre y apellido" htmlFor={`${id}-nombre`}>
+          <Input
+            id={`${id}-nombre`}
+            required
+            className="h-12 text-base md:text-base"
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            placeholder="Tu nombre completo"
+            autoComplete="name"
+            disabled={isLoading}
+          />
+        </Field>
+        <Field label="Tu Instagram" htmlFor={`${id}-usuario`}>
+          <Input
+            id={`${id}-usuario`}
+            required
+            className="h-12 text-base md:text-base"
+            value={instagram}
+            onChange={(e) => setInstagram(e.target.value)}
+            placeholder="@tuusuario"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            disabled={isLoading}
+          />
+        </Field>
+        <Field label="Tu WhatsApp" htmlFor={`${id}-telefono`}>
+          <Input
+            id={`${id}-telefono`}
+            required
+            className="h-12 text-base md:text-base"
+            type="tel"
+            value={telefono}
+            onChange={(e) => setTelefono(e.target.value)}
+            placeholder="Ej: 379 4123456"
+            autoComplete="tel"
+            disabled={isLoading}
+          />
+        </Field>
+        <Field label="Email" htmlFor={`${id}-email`}>
+          <Input
+            id={`${id}-email`}
+            required
+            className="h-12 text-base md:text-base"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="tu@email.com"
+            autoComplete="email"
+            disabled={isLoading}
+          />
+        </Field>
+      </section>
+
+      <div className="space-y-4 text-base">
+        <Casilla checked={aceptaBases} onChange={setAceptaBases} disabled={isLoading} required>
           Soy mayor de 18 años y acepto las{" "}
           <Link href="/terminos" className="neon-text underline">
             Bases y Condiciones
@@ -299,21 +309,21 @@ export function FormularioGratis({
         <Casilla checked={aceptaNovedades} onChange={setAceptaNovedades} disabled={isLoading}>
           {CONSENTIMIENTO_NOVEDADES}
         </Casilla>
-        <p className="text-xs text-gray-500">
-          Recibir novedades es opcional y podés darte de baja cuando quieras.
+        <p className="text-sm text-zinc-400">
+          Opcional. Podés darte de baja cuando quieras.
         </p>
       </div>
 
       {error && (
-        <div className="bg-red-500/10 border border-red-500/40 rounded-lg p-3 text-red-300 text-sm">
+        <div role="alert" className="bg-red-500/10 border border-red-500/40 rounded-lg p-3 text-red-300 text-base">
           {error}
         </div>
       )}
 
       <Button
         type="submit"
-        disabled={!formularioValido || isLoading}
-        className="btn-neon-pill h-auto w-full rounded-full px-8 py-3 text-base"
+        disabled={isLoading}
+        className="btn-neon-pill h-auto w-full rounded-full px-8 py-4 text-lg"
       >
         {isLoading ? (
           <>
@@ -331,10 +341,10 @@ export function FormularioGratis({
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                             */
 /* ------------------------------------------------------------------ */
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, htmlFor, children }: { label: string; htmlFor: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-gray-200">
+      <Label htmlFor={htmlFor} className="text-base text-gray-200">
         {label} <span className="text-[#ff0040]">*</span>
       </Label>
       {children}
@@ -346,23 +356,35 @@ function Casilla({
   checked,
   onChange,
   disabled,
+  required,
   children,
 }: {
   checked: boolean
   onChange: (value: boolean) => void
   disabled?: boolean
+  required?: boolean
   children: React.ReactNode
 }) {
   return (
-    <label className="flex items-start gap-3 cursor-pointer text-gray-300">
+    <label className="flex min-h-11 items-start gap-3 cursor-pointer text-base leading-relaxed text-gray-300">
       <input
         type="checkbox"
+        required={required}
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
         disabled={disabled}
-        className="accent-[#ff0040] w-4 h-4 mt-0.5 shrink-0"
+        className="accent-[#ff0040] w-5 h-5 mt-0.5 shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
       />
       <span>{children}</span>
     </label>
+  )
+}
+
+function Paso({ numero, id, children }: { numero: number; id: string; children: React.ReactNode }) {
+  return (
+    <h3 id={id} className="flex items-start gap-3 text-xl font-bold leading-snug text-white">
+      <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-base">{numero}</span>
+      <span>{children}</span>
+    </h3>
   )
 }

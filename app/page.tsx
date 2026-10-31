@@ -7,9 +7,6 @@ import { Clock, Trophy } from "lucide-react"
 import Link from "next/link"
 import { FormularioGratis } from "@/components/formulario-gratis"
 import { Header } from "@/components/header"
-import { GanadoresPasados } from "@/components/ganadores-pasados"
-import { GanadoresExpress } from "@/components/ganadores-express"
-import { RedesSociales } from "@/components/redes-sociales"
 import dynamic from "next/dynamic"
 
 const IphoneCarousel = dynamic(() => import("@/components/iphone-carousel"), {
@@ -552,11 +549,10 @@ export default function LandingPage() {
               rel="noopener noreferrer"
               className="inline-block btn-neon px-6 py-3 rounded-lg font-semibold text-sm tracking-wide"
             >
-              {contenido.proximamente_boton}
+              Contactar por WhatsApp
             </Link>
           </div>
         </div>
-        <RedesSociales contenido={contenido} />
         <footer className="bg-black border-t border-gray-900 py-6">
           <div className="container mx-auto px-4 text-center text-gray-600 text-xs tracking-wide">
             <p>{contenido.footer_copyright}</p>
@@ -758,7 +754,7 @@ export default function LandingPage() {
               {/* Participación gratuita: en lugar de los packs del sitio principal */}
               {!sorteoCompleto && (
                 <div className="order-2 lg:order-4 space-y-4">
-                  <p className="pb-1 text-center text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
+                  <p className="pb-1 text-center text-base text-zinc-300">
                     Participá gratis desde Argentina o Paraguay
                   </p>
                   <FormularioGratis />
@@ -809,29 +805,6 @@ export default function LandingPage() {
                 {consultaLoading ? "Buscando..." : contenido.consulta_boton}
               </button>
             </form>
-          </div>
-
-          {/* Tarjeta de contacto por WhatsApp */}
-          <div className="consulta-card p-7 sm:p-9 mb-6">
-            <p className="text-center text-gray-300 text-lg font-medium mb-5">
-              ¿Tenés consultas sobre la promoción?
-            </p>
-            <Link
-              href={contenido.whatsapp_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-whatsapp flex items-center justify-center gap-3 w-full py-4 rounded-xl text-base font-bold tracking-wide"
-            >
-              <svg
-                className="w-6 h-6"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zm0 18.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.264 8.264 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 2.2 0 4.27.86 5.82 2.42a8.183 8.183 0 0 1 2.41 5.83c0 4.54-3.7 8.23-8.24 8.23zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.13-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43-.14-.01-.31-.01-.48-.01-.17 0-.43.06-.66.31-.23.25-.87.85-.87 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.14-1.18-.06-.11-.22-.17-.47-.29z" />
-              </svg>
-              Contactar por WhatsApp
-            </Link>
           </div>
 
           {consultaError && (
@@ -924,63 +897,28 @@ export default function LandingPage() {
               ))}
             </div>
           )}
-        </div>
-      </section>
 
-      {/* Ganadores Express */}
-      {sorteo && (
-        <GanadoresExpress sorteoId={sorteo.id} contenido={contenido} />
-      )}
-
-      {/* Ganadores Pasados */}
-      <GanadoresPasados contenido={contenido} />
-
-      {/* Links de interés / Redes sociales */}
-      <RedesSociales contenido={contenido} />
-
-      {/* Sección FAQ */}
-      <section className="py-10 border-t border-gray-900">
-        <div className="container mx-auto px-4 max-w-xl text-center">
-          <h2 className="text-4xl lg:text-5xl font-display tracking-wider text-white mb-10">
-            {contenido.faq_titulo}
-          </h2>
-
-          <div className="space-y-8">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-gray-600 mb-3">
-                {contenido.faq_pregunta_fecha}
-              </p>
-              <div className="border-l-2 border-r-2 border-[#ff0040]/40 px-4">
-                <span className="text-white text-lg font-medium">
-                  {sorteo?.fecha_sorteo
-                    ? new Date(
-                        sorteo.fecha_sorteo + "T12:00:00",
-                      ).toLocaleDateString("es-AR", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      })
-                    : "Próximamente"}
-                </span>
-              </div>
-            </div>
-
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-gray-600 mb-3">
-                {contenido.faq_pregunta_ganador}
-              </p>
-              <Link
-                href={contenido.faq_link_quiniela}
-                target="_blank"
-                rel="noopener noreferrer"
+          {/* Tarjeta de contacto por WhatsApp: último bloque antes del footer. */}
+          <div className="consulta-card mt-6 p-7 sm:p-9">
+            <p className="text-center text-gray-300 text-lg font-medium mb-5">
+              ¿Tenés consultas sobre la promoción?
+            </p>
+            <Link
+              href={contenido.whatsapp_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-whatsapp flex items-center justify-center gap-3 w-full py-4 rounded-xl text-base font-bold tracking-wide"
+            >
+              <svg
+                className="w-6 h-6"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
               >
-                <div className="border-l-2 border-r-2 border-[#ff0040]/40 px-4 hover:border-[#ff0040] transition-colors duration-200">
-                  <span className="text-[#ff0040] text-base font-medium">
-                    {contenido.faq_respuesta_ganador}
-                  </span>
-                </div>
-              </Link>
-            </div>
+                <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zm0 18.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.264 8.264 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 2.2 0 4.27.86 5.82 2.42a8.183 8.183 0 0 1 2.41 5.83c0 4.54-3.7 8.23-8.24 8.23zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.13-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43-.14-.01-.31-.01-.48-.01-.17 0-.43.06-.66.31-.23.25-.87.85-.87 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.14-1.18-.06-.11-.22-.17-.47-.29z" />
+              </svg>
+              Contactar por WhatsApp
+            </Link>
           </div>
         </div>
       </section>
