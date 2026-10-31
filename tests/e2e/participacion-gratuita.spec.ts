@@ -1,13 +1,13 @@
 import { expect, test } from "@playwright/test"
 
-test("mantiene Instagram y el canal, permite participar sin captura y reintentar", async ({ page }) => {
+test("exige la captura de Instagram y el canal, conserva los datos y permite reintentar", async ({ page }) => {
   await page.route("http://127.0.0.1:54321/**", (route) =>
     route.fulfill({ json: [] }),
   )
   let envios = 0
   await page.route("**/api/participacion-gratuita", async (route) => {
     const body = route.request().postDataBuffer()!.toString()
-    expect(body).not.toContain('name="captura_')
+    expect(body).toContain('name="captura_agustinsosamotoss"')
     expect(body).not.toContain("sosa.motos.oficial")
     for (const campo of ["sigueCanalWhatsapp", "aceptaBases"]) {
       expect(body).toContain(`name="${campo}"\r\n\r\ntrue`)
@@ -26,8 +26,8 @@ test("mantiene Instagram y el canal, permite participar sin captura y reintentar
   await expect(page.getByRole("heading", { name: "Participá en 3 pasos" })).toBeVisible()
   await expect(page.getByRole("heading", { name: /Seguí a Agustín Sosa/ })).toBeVisible()
   await expect(page.getByRole("link", { name: "Seguir en Instagram" })).toBeVisible()
-  await expect(page.locator('input[type="file"]')).toHaveCount(0)
-  await expect(page.getByText(/subí una captura/i)).toHaveCount(0)
+  await expect(page.locator('input[type="file"]')).toHaveCount(1)
+  await expect(page.getByText("Subí una captura que muestre que lo seguís. Es obligatoria.")).toBeVisible()
   await expect(page.getByRole("link", { name: "Entrar al canal" })).toHaveAttribute(
     "href", "https://whatsapp.com/channel/0029VaB9bCi6GcGLs2JEvM12",
   )
@@ -43,6 +43,15 @@ test("mantiene Instagram y el canal, permite participar sin captura y reintentar
   )).toBe(true)
 
   await page.getByRole("checkbox", { name: "Ya sigo el canal" }).check()
+  await page.getByRole("button", { name: "Participar gratis" }).click()
+  await expect(page.locator("form").getByRole("alert")).toHaveText("Subí una captura donde se vea que seguís a Agustín.")
+  expect(envios).toBe(0)
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "captura.png",
+    mimeType: "image/png",
+    buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=", "base64"),
+  })
+  await expect(page.getByText("Captura lista · Cambiar")).toBeVisible()
   await page.getByRole("button", { name: "Participar gratis" }).click()
   await expect(page.locator("form").getByRole("alert")).toHaveText("Ya hay una participación con este email.")
   await expect(page.getByLabel("Nombre y apellido")).toHaveValue("Participante de prueba")
@@ -71,4 +80,19 @@ test("el servidor rechaza requisitos incompletos antes de registrar la participa
   })
   expect(sinInstagram.status()).toBe(400)
   expect((await sinInstagram.json()).error).toContain("Ingresá tu usuario de Instagram")
+
+  const sinCaptura = await request.post("/api/participacion-gratuita", {
+    multipart: { ...datos, sigueCanalWhatsapp: "true", aceptaBases: "true" },
+  })
+  expect(sinCaptura.status()).toBe(400)
+  expect((await sinCaptura.json()).error).toContain("Falta la captura")
+
+  const capturaInvalida = await request.post("/api/participacion-gratuita", {
+    multipart: {
+      ...datos, sigueCanalWhatsapp: "true", aceptaBases: "true",
+      captura_agustinsosamotoss: { name: "captura.txt", mimeType: "text/plain", buffer: Buffer.from("no es una imagen") },
+    },
+  })
+  expect(capturaInvalida.status()).toBe(400)
+  expect((await capturaInvalida.json()).error).toContain("deben ser imágenes")
 })

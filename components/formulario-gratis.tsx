@@ -186,7 +186,7 @@ export function FormularioGratis({
           href={CUENTA_INSTAGRAM_REQUERIDA.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#c72b68] px-4 py-3 text-base font-bold text-white transition-colors hover:bg-[#ae245a] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+          className="btn-consultar flex min-h-12 items-center justify-center gap-2 rounded-lg px-4 py-3 text-base font-bold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
         >
           <Instagram className="h-5 w-5 shrink-0" aria-hidden="true" />
           Seguir en Instagram
@@ -195,12 +195,12 @@ export function FormularioGratis({
         {SOLICITAR_CAPTURA_INSTAGRAM && (
           <>
             <p id={`${id}-captura-ayuda`} className="text-base text-zinc-300">
-              Después, subí una captura que muestre que lo seguís.
+              Subí una captura que muestre que lo seguís. Es obligatoria.
             </p>
             <label
               className={`relative flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-3 text-base font-semibold ring-1 focus-within:outline focus-within:outline-2 focus-within:outline-offset-4 focus-within:outline-white ${
                 captura
-                  ? "bg-green-500/15 text-green-300 ring-green-500/40"
+                  ? "bg-[#ff0040]/10 text-white ring-[#ff0040]/50"
                   : "bg-white/10 text-white ring-white/25 hover:bg-white/15"
               }`}
             >
@@ -229,7 +229,7 @@ export function FormularioGratis({
           href={CANAL_WHATSAPP_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#176f3b] px-4 py-3 text-base font-bold text-white transition-colors hover:bg-[#125c30] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+          className="btn-consultar flex min-h-12 items-center justify-center gap-2 rounded-lg px-4 py-3 text-base font-bold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
         >
           <MessageCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
           Entrar al canal

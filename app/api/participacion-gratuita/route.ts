@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
   if (unpublished) return unpublished
 
   try {
-    // multipart/form-data: datos y confirmación del canal. Captura temporalmente deshabilitada.
+    // multipart/form-data: datos, confirmación del canal y captura obligatoria de Instagram.
     const formData = await request.formData()
     const nombre = String(formData.get("nombre") || "")
     const email = String(formData.get("email") || "")
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // La captura de Agustín queda deshabilitada hasta que se vuelva a solicitar.
+    // Comprobar la captura de Agustín antes de registrar la participación.
     const capturas: { cuenta: string; archivo: File; extension: string }[] = []
     for (const cuenta of SOLICITAR_CAPTURA_INSTAGRAM ? [CUENTA_INSTAGRAM_REQUERIDA] : []) {
       const archivo = formData.get(`captura_${cuenta.id}`)

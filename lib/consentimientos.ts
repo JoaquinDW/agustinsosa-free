@@ -23,9 +23,8 @@ export const CUENTAS_INSTAGRAM = [
 // Única cuenta requerida para las nuevas participaciones.
 export const CUENTA_INSTAGRAM_REQUERIDA = CUENTAS_INSTAGRAM[0]
 
-// Temporalmente no se pide comprobante: el requisito de seguir en Instagram continúa.
-// Compartido entre formulario y API para permitir la inscripción sin adjuntos.
-export const SOLICITAR_CAPTURA_INSTAGRAM = false
+// La captura es obligatoria tanto en el formulario como en la API.
+export const SOLICITAR_CAPTURA_INSTAGRAM = true
 
 export const TIPOS_CAPTURA: Record<string, string> = {
   "image/jpeg": "jpg",
